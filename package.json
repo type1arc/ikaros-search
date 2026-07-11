@@ -1,0 +1,21 @@
+{
+  "name": "ikaros",
+  "version": "1.0.0",
+  "description": "Ikaros - Search the entire web, privately.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.18.1",
+    "cheerio": "^1.2.0",
+    "compression": "^1.8.1",
+    "express": "^5.2.1"
+  }
+}

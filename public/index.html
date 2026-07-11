@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ikaros</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --c-bg: #120c08;
+      --c-panel: #1c1209;
+      --c-surface: #261a10;
+      --c-border: #3d2a18;
+      --c-borderHover: #302012;
+      --c-accent1: #ff6a00;
+      --c-accent2: #ff9500;
+      --c-accent3: #e63946;
+      --c-textMain: #f0e6dc;
+      --c-textDim: #b09888;
+      --c-textMuted: #705848;
+    }
+    body {
+      background: var(--c-bg); color: var(--c-textMain);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh; margin: 0; transition: background 0.3s, color 0.3s;
+    }
+    .logo-text {
+      background: linear-gradient(135deg, var(--c-accent1), var(--c-accent2), var(--c-accent3));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .search-glow:focus-within { border-color: var(--c-accent1); box-shadow: 0 0 24px color-mix(in srgb, var(--c-accent1) 35%, transparent); }
+    .search-box-bg { background: var(--c-surface); border-color: var(--c-border); }
+    .search-box-bg:hover { border-color: var(--c-accent1); }
+    .search-btn-bg { background: linear-gradient(135deg, var(--c-accent1), var(--c-accent3)); }
+    .search-btn-bg:hover { box-shadow: 0 0 18px color-mix(in srgb, var(--c-accent1) 50%, transparent); }
+    .panel-bg { background: var(--c-panel); border-color: var(--c-borderHover); }
+    .surface-bg { background: var(--c-surface); border-color: var(--c-border); }
+    .surface-bg:hover { border-color: var(--c-accent1); background: color-mix(in srgb, var(--c-surface) 92%, var(--c-accent1)); }
+    .result-card { background: var(--c-panel); border-color: var(--c-borderHover); transition: border-color 0.2s, transform 0.15s; }
+    .result-card:hover { border-color: var(--c-accent1); transform: translateX(4px); }
+    .text-accent { color: var(--c-accent1); }
+    .text-cyan-custom { color: var(--c-accent2); }
+    .text-pink-custom { color: var(--c-accent3); }
+    .text-dim { color: var(--c-textDim); }
+    .text-muted { color: var(--c-textMuted); }
+    .spinner::after {
+      content: ''; display: inline-block; width: 36px; height: 36px;
+      border: 3px solid var(--c-border); border-top-color: var(--c-accent1);
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Palette */
+    .palette-btn { transition: all 0.2s; }
+    .palette-btn:hover { transform: scale(1.1); }
+    .palette-panel {
+      position: fixed; top: 0; right: -400px; width: 380px; height: 100vh;
+      background: var(--c-panel); border-left: 1px solid var(--c-border);
+      z-index: 1000; overflow-y: auto; transition: right 0.3s ease;
+      box-shadow: -4px 0 30px rgba(0,0,0,0.5);
+    }
+    .palette-panel.open { right: 0; }
+    .palette-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      z-index: 999; display: none; opacity: 0; transition: opacity 0.3s;
+    }
+    .palette-overlay.open { display: block; opacity: 1; }
+
+    .color-slot {
+      display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+      border-radius: 10px; cursor: pointer; transition: all 0.15s;
+      border: 2px solid transparent;
+    }
+    .color-slot:hover { background: rgba(255,255,255,0.04); }
+    .color-slot.active { border-color: var(--c-accent1); background: rgba(255,255,255,0.06); }
+    .color-swatch {
+      width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+      border: 2px solid rgba(255,255,255,0.1);
+    }
+    .preset-chip {
+      display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 0.78rem;
+      border: 1px solid var(--c-border); background: var(--c-surface); color: var(--c-textDim);
+      cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    }
+    .preset-chip:hover { border-color: var(--c-accent1); color: #fff; }
+
+    #colorWheel { cursor: crosshair; touch-action: none; }
+    #brightnessBar { cursor: ew-resize; touch-action: none; }
+
+    /* Search mode toggle */
+    .mode-tab {
+      padding: 6px 18px; border-radius: 20px; font-size: 0.85rem; font-weight: 500;
+      border: 1px solid var(--c-border); background: transparent; color: var(--c-textDim);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .mode-tab:hover { border-color: var(--c-accent1); color: #fff; }
+    .mode-tab.active { background: var(--c-accent1); border-color: var(--c-accent1); color: #fff; }
+
+    /* Image grid */
+    .image-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+    }
+    .image-card {
+      position: relative; border-radius: 10px; overflow: hidden;
+      border: 2px solid var(--c-border); background: var(--c-surface);
+      cursor: pointer; transition: border-color 0.2s, transform 0.15s;
+      aspect-ratio: 4/3;
+    }
+    .image-card:hover { border-color: var(--c-accent1); transform: scale(1.03); }
+    .image-card img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .image-card .img-overlay {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.85));
+      padding: 24px 10px 8px; font-size: 0.75rem; color: #ccc;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+      z-index: 2000; display: none; align-items: center; justify-content: center;
+      cursor: zoom-out;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox img {
+      max-width: 92vw; max-height: 88vh; border-radius: 8px; box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    }
+    .lightbox .lb-close {
+      position: absolute; top: 20px; right: 28px; font-size: 2rem;
+      color: #fff; cursor: pointer; opacity: 0.7; transition: opacity 0.2s;
+    }
+    .lightbox .lb-close:hover { opacity: 1; }
+    .lightbox .lb-info {
+      position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: var(--c-panel); border: 1px solid var(--c-border);
+      border-radius: 10px; padding: 10px 18px; max-width: 600px; width: 90%;
+      text-align: center; font-size: 0.85rem; color: var(--c-textDim);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Palette toggle -->
+  <button id="paletteToggle" class="palette-btn fixed bottom-6 right-6 z-[1001] w-12 h-12 rounded-full search-btn-bg flex items-center justify-center shadow-lg hover:shadow-xl cursor-pointer" aria-label="Color palette">
+    <svg class="w-5 h-5 fill-white" viewBox="0 0 24 24"><path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10a2.5 2.5 0 0 0 2.5-2.5c0-.61-.23-1.21-.64-1.67-.08-.09-.13-.21-.13-.33 0-.28.22-.5.5-.5H16c3.31 0 6-2.69 6-6 0-4.96-4.49-8-10-8zM6.5 13a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3-4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>
+  </button>
+
+  <div class="palette-overlay" id="paletteOverlay"></div>
+
+  <!-- Palette panel -->
+  <div class="palette-panel" id="palettePanel">
+    <div class="p-5">
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="text-lg font-bold text-white">Color Palette</h2>
+        <button id="paletteClose" class="text-gray-400 hover:text-white text-xl cursor-pointer">&times;</button>
+      </div>
+
+      <!-- Presets -->
+      <div class="mb-5">
+        <h3 class="text-xs uppercase tracking-wider text-gray-500 mb-2">Presets</h3>
+        <div class="flex flex-wrap gap-1.5" id="presetList"></div>
+      </div>
+
+      <!-- Color wheel area -->
+      <div class="mb-5">
+        <h3 class="text-xs uppercase tracking-wider text-gray-500 mb-3">Wheel</h3>
+        <div class="flex gap-3 items-start">
+          <canvas id="colorWheel" width="220" height="220" class="rounded-full shrink-0"></canvas>
+          <div class="flex flex-col gap-2 flex-1 min-w-0">
+            <canvas id="brightnessBar" width="40" height="220" class="rounded-lg shrink-0"></canvas>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 mt-3">
+          <div id="wheelPreview" class="w-10 h-10 rounded-lg shrink-0 border-2 border-white/10"></div>
+          <div class="flex-1 min-w-0">
+            <input id="hexInput" type="text" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-[var(--c-accent1)]" placeholder="#000000" spellcheck="false" />
+          </div>
+          <div class="text-xs text-gray-500 truncate" id="wheelSlotLabel">--</div>
+        </div>
+      </div>
+
+      <!-- Color slots -->
+      <div class="mb-6">
+        <h3 class="text-xs uppercase tracking-wider text-gray-500 mb-2">Slots</h3>
+        <div class="space-y-1" id="colorSlots"></div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex gap-2">
+        <button id="paletteReset" class="flex-1 py-2.5 rounded-xl text-sm border text-gray-400 hover:text-white transition-all cursor-pointer" style="border-color:var(--c-border)">Reset</button>
+        <button id="paletteSave" class="flex-1 py-2.5 rounded-xl text-sm text-white font-medium transition-all cursor-pointer search-btn-bg">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Landing -->
+  <div class="flex flex-col items-center justify-center h-screen" id="landing">
+    <h1 class="logo-text text-6xl font-extrabold tracking-tight mb-3 cursor-pointer" id="landingLogo">Ikaros</h1>
+    <p class="text-lg mb-10 text-dim">Search the entire web, privately.</p>
+    <div class="relative w-[90%] max-w-[700px]" id="searchWrap">
+      <form onsubmit="event.preventDefault(); doSearch(searchInput.value, 1);" class="flex items-center search-box-bg border-2 rounded-full pl-7 pr-2.5 py-2.5 search-glow transition-all duration-300">
+        <input type="text" id="searchInput" class="flex-1 bg-transparent border-none outline-none text-white text-xl py-2 px-3" style="color:var(--c-textMain)" placeholder="Search anything..." autocomplete="off" />
+        <button type="button" id="searchBtn" class="w-[50px] h-[50px] rounded-full search-btn-bg flex items-center justify-center hover:scale-110 transition-all duration-200 shrink-0 cursor-pointer" aria-label="Search">
+          <svg class="w-6 h-6 fill-white" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        </button>
+      </form>
+    </div>
+    <div class="w-[90%] max-w-[700px] grid grid-cols-5 gap-2 mt-7" id="quickLinks"></div>
+  </div>
+
+  <!-- Top bar -->
+  <div class="items-center gap-4 max-w-[800px] mx-auto px-6 pt-5 pb-4 border-b" style="display:none; border-color:var(--c-borderHover)" id="topBar">
+    <h1 class="logo-text text-2xl font-extrabold tracking-tight cursor-pointer shrink-0" id="backLogo">Ikaros</h1>
+    <div id="searchSlot" class="flex-1 w-auto"></div>
+  </div>
+
+  <!-- Search mode tabs -->
+  <div class="max-w-[800px] mx-auto px-6 pt-4 pb-2" style="display:none" id="modeBar">
+    <div class="flex gap-2">
+      <button class="mode-tab active" data-mode="web" id="tabWeb">Web</button>
+      <button class="mode-tab" data-mode="images" id="tabImages">Images</button>
+    </div>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox">
+    <span class="lb-close">&times;</span>
+    <img id="lbImg" src="" alt="" />
+    <div class="lb-info" id="lbInfo"></div>
+  </div>
+
+  <!-- Results -->
+  <div class="max-w-[800px] mx-auto px-6 pt-5 pb-16" style="display:none" id="resultsPage">
+    <div class="panel-bg border rounded-2xl p-5 mb-6" style="display:none" id="wikiCard">
+      <img class="float-right ml-3.5 mb-2 rounded-lg max-h-[100px]" style="display:none" id="wikiThumb" src="" alt="" />
+      <h3 class="text-pink-custom mb-2.5 text-sm font-semibold" id="wikiTitle"></h3>
+      <p class="text-gray-400 text-[0.9rem] leading-relaxed mb-2" id="wikiExtract"></p>
+      <a class="text-accent text-xs hover:underline" id="wikiLink" href="#" target="_blank" rel="noopener">Read more on Wikipedia &rarr;</a>
+    </div>
+    <p class="text-muted text-sm mb-4" id="resultCount"></p>
+    <div class="text-center py-10 spinner" style="display:none" id="spinner"></div>
+    <div id="results"></div>
+    <div id="imageGrid" class="image-grid" style="display:none"></div>
+    <div class="text-center py-16 text-muted text-lg" style="display:none" id="noResults">
+      <div class="text-5xl mb-3">&#x1F50D;</div>
+      No results found. Try a different query.
+    </div>
+    <div class="flex justify-center gap-2 mt-8" id="pagination"></div>
+  </div>
+
+  <script>
+    /* ========== Color Utilities ========== */
+    function hexToHsl(hex) {
+      var r = parseInt(hex.slice(1,3),16)/255, g = parseInt(hex.slice(3,5),16)/255, b = parseInt(hex.slice(5,7),16)/255;
+      var max = Math.max(r,g,b), min = Math.min(r,g,b), h, s, l = (max+min)/2;
+      if (max===min) { h=s=0; } else {
+        var d = max-min; s = l>0.5 ? d/(2-max-min) : d/(max+min);
+        if (max===r) h=((g-b)/d+(g<b?6:0))/6;
+        else if (max===g) h=((b-r)/d+2)/6;
+        else h=((r-g)/d+4)/6;
+      }
+      return { h: Math.round(h*360), s: Math.round(s*100), l: Math.round(l*100) };
+    }
+
+    function hslToHex(h,s,l) {
+      h/=360; s/=100; l/=100;
+      var r,g,b;
+      if (s===0) { r=g=b=l; } else {
+        function hue2rgb(p,q,t) { if(t<0)t+=1; if(t>1)t-=1; if(t<1/6)return p+(q-p)*6*t; if(t<1/2)return q; if(t<2/3)return p+(q-p)*(2/3-t)*6; return p; }
+        var q = l<0.5 ? l*(1+s) : l+s-l*s, p = 2*l-q;
+        r = hue2rgb(p,q,h+1/3); g = hue2rgb(p,q,h); b = hue2rgb(p,q,h-1/3);
+      }
+      return '#' + [r,g,b].map(function(x){ var v=Math.round(x*255).toString(16); return v.length===1?'0'+v:v; }).join('');
+    }
+
+    function hexToRgb(hex) {
+      return { r: parseInt(hex.slice(1,3),16), g: parseInt(hex.slice(3,5),16), b: parseInt(hex.slice(5,7),16) };
+    }
+
+    /* ========== Palette State ========== */
+    var defaultPalette = {
+      bg: '#120c08', panel: '#1c1209', surface: '#261a10',
+      border: '#3d2a18', borderHover: '#302012',
+      accent1: '#ff6a00', accent2: '#ff9500', accent3: '#e63946',
+      textMain: '#f0e6dc', textDim: '#b09888', textMuted: '#705848'
+    };
+
+    var paletteKeys = [
+      { key: 'bg', label: 'Background' },
+      { key: 'panel', label: 'Panel' },
+      { key: 'surface', label: 'Surface' },
+      { key: 'border', label: 'Border' },
+      { key: 'borderHover', label: 'Border Hover' },
+      { key: 'accent1', label: 'Accent 1' },
+      { key: 'accent2', label: 'Accent 2' },
+      { key: 'accent3', label: 'Accent 3' },
+      { key: 'textMain', label: 'Text Main' },
+      { key: 'textDim', label: 'Text Dim' },
+      { key: 'textMuted', label: 'Text Muted' }
+    ];
+
+    var presets = [
+      { name: 'Flame', bg:'#120c08', panel:'#1c1209', surface:'#261a10', border:'#3d2a18', borderHover:'#302012', accent1:'#ff6a00', accent2:'#ff9500', accent3:'#e63946', textMain:'#f0e6dc', textDim:'#b09888', textMuted:'#705848' },
+      { name: 'Ocean', bg:'#0a192f', panel:'#112240', surface:'#1d3461', border:'#233554', borderHover:'#1a3050', accent1:'#64ffda', accent2:'#57cbff', accent3:'#7b61ff', textMain:'#ccd6f6', textDim:'#8892b0', textMuted:'#495670' },
+      { name: 'Sunset', bg:'#1a1017', panel:'#2a1525', surface:'#3a1f35', border:'#4a2a45', borderHover:'#3a2040', accent1:'#ff6b6b', accent2:'#ffa502', accent3:'#ff4757', textMain:'#f5f5f5', textDim:'#b0a0b0', textMuted:'#7a6a7a' },
+      { name: 'Forest', bg:'#0d1b0e', panel:'#162818', surface:'#1f3a22', border:'#2a4a2e', borderHover:'#224028', accent1:'#00e676', accent2:'#69f0ae', accent3:'#b9f6ca', textMain:'#e8f5e9', textDim:'#a5d6a7', textMuted:'#66bb6a' },
+      { name: 'Neon', bg:'#0d0221', panel:'#150530', surface:'#1a0840', border:'#2b1060', borderHover:'#200a50', accent1:'#f72585', accent2:'#4cc9f0', accent3:'#7209b7', textMain:'#f0f0f0', textDim:'#b0a0d0', textMuted:'#6050a0' },
+      { name: 'Ash', bg:'#111111', panel:'#1a1a1a', surface:'#222222', border:'#333333', borderHover:'#2a2a2a', accent1:'#ffffff', accent2:'#bbbbbb', accent3:'#888888', textMain:'#f0f0f0', textDim:'#999999', textMuted:'#666666' },
+    ];
+
+    function loadPalette() {
+      try { return JSON.parse(localStorage.getItem('ikaros_palette')) || defaultPalette; }
+      catch(e) { return defaultPalette; }
+    }
+    function savePalette(p) { localStorage.setItem('ikaros_palette', JSON.stringify(p)); }
+    function applyPalette(p) {
+      var root = document.documentElement;
+      paletteKeys.forEach(function(k) { root.style.setProperty('--c-' + k.key, p[k.key]); });
+    }
+
+    var currentPalette = loadPalette();
+    applyPalette(currentPalette);
+
+    /* ========== Color Wheel ========== */
+    var wheelCanvas = document.getElementById('colorWheel');
+    var wheelCtx = wheelCanvas.getContext('2d');
+    var brightCanvas = document.getElementById('brightnessBar');
+    var brightCtx = brightCanvas.getContext('2d');
+    var previewEl = document.getElementById('wheelPreview');
+    var hexInput = document.getElementById('hexInput');
+    var slotLabelEl = document.getElementById('wheelSlotLabel');
+
+    var wheelR = wheelCanvas.width / 2;
+    var selectedSlot = 'accent1';
+    var currentHsl = hexToHsl(currentPalette.accent1);
+    var draggingWheel = false;
+    var draggingBright = false;
+
+    function drawWheel() {
+      var ctx = wheelCtx, cx = wheelR, cy = wheelR, r = wheelR - 2;
+      var imgData = ctx.createImageData(wheelCanvas.width, wheelCanvas.height);
+      var data = imgData.data;
+      for (var y = 0; y < wheelCanvas.height; y++) {
+        for (var x = 0; x < wheelCanvas.width; x++) {
+          var dx = x - cx, dy = y - cy;
+          var dist = Math.sqrt(dx*dx + dy*dy);
+          if (dist <= r) {
+            var angle = Math.atan2(dy, dx);
+            var hue = ((angle * 180 / Math.PI) + 360) % 360;
+            var sat = dist / r * 100;
+            var hex = hslToHex(hue, sat, currentHsl.l);
+            var rgb = hexToRgb(hex);
+            var idx = (y * wheelCanvas.width + x) * 4;
+            data[idx] = rgb.r; data[idx+1] = rgb.g; data[idx+2] = rgb.b; data[idx+3] = 255;
+          }
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+    }
+
+    function drawBrightnessBar() {
+      var ctx = brightCtx, w = brightCanvas.width, h = brightCanvas.height;
+      var imgData = ctx.createImageData(w, h);
+      var data = imgData.data;
+      for (var y = 0; y < h; y++) {
+        var lightness = Math.round((1 - y / h) * 100);
+        var hex = hslToHex(currentHsl.h, currentHsl.s, lightness);
+        var rgb = hexToRgb(hex);
+        for (var x = 0; x < w; x++) {
+          var idx = (y * w + x) * 4;
+          data[idx] = rgb.r; data[idx+1] = rgb.g; data[idx+2] = rgb.b; data[idx+3] = 255;
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+    }
+
+    function updatePreview() {
+      var hex = hslToHex(currentHsl.h, currentHsl.s, currentHsl.l);
+      previewEl.style.background = hex;
+      hexInput.value = hex;
+      slotLabelEl.textContent = paletteKeys.find(function(k){ return k.key===selectedSlot; }).label;
+    }
+
+    function setSlotColor(hex) {
+      currentPalette[selectedSlot] = hex;
+      applyPalette(currentPalette);
+      renderSlots();
+    }
+
+    function wheelPick(e) {
+      var rect = wheelCanvas.getBoundingClientRect();
+      var x = (e.clientX || e.touches[0].clientX) - rect.left;
+      var y = (e.clientY || e.touches[0].clientY) - rect.top;
+      var dx = x - wheelR, dy = y - wheelR;
+      var dist = Math.min(Math.sqrt(dx*dx + dy*dy), wheelR - 2);
+      var angle = Math.atan2(dy, dx);
+      var hue = ((angle * 180 / Math.PI) + 360) % 360;
+      var sat = dist / (wheelR - 2) * 100;
+      currentHsl.h = Math.round(hue);
+      currentHsl.s = Math.round(sat);
+      var hex = hslToHex(currentHsl.h, currentHsl.s, currentHsl.l);
+      setSlotColor(hex);
+      updatePreview();
+      drawBrightnessBar();
+    }
+
+    function brightPick(e) {
+      var rect = brightCanvas.getBoundingClientRect();
+      var y = Math.max(0, Math.min((e.clientY || e.touches[0].clientY) - rect.top, brightCanvas.height));
+      currentHsl.l = Math.round((1 - y / brightCanvas.height) * 100);
+      var hex = hslToHex(currentHsl.h, currentHsl.s, currentHsl.l);
+      setSlotColor(hex);
+      updatePreview();
+      drawWheel();
+    }
+
+    wheelCanvas.addEventListener('mousedown', function(e) { draggingWheel=true; wheelPick(e); });
+    wheelCanvas.addEventListener('touchstart', function(e) { e.preventDefault(); draggingWheel=true; wheelPick(e); }, {passive:false});
+    brightCanvas.addEventListener('mousedown', function(e) { draggingBright=true; brightPick(e); });
+    brightCanvas.addEventListener('touchstart', function(e) { e.preventDefault(); draggingBright=true; brightPick(e); }, {passive:false});
+    document.addEventListener('mousemove', function(e) { if(draggingWheel) wheelPick(e); if(draggingBright) brightPick(e); });
+    document.addEventListener('touchmove', function(e) { if(draggingWheel) wheelPick(e); if(draggingBright) brightPick(e); }, {passive:false});
+    document.addEventListener('mouseup', function() { draggingWheel=false; draggingBright=false; });
+    document.addEventListener('touchend', function() { draggingWheel=false; draggingBright=false; });
+
+    hexInput.addEventListener('change', function() {
+      var v = this.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+        currentHsl = hexToHsl(v);
+        setSlotColor(v);
+        updatePreview();
+        drawWheel();
+        drawBrightnessBar();
+      }
+    });
+
+    /* ========== Color Slots ========== */
+    function renderSlots() {
+      var container = document.getElementById('colorSlots');
+      container.innerHTML = paletteKeys.map(function(k) {
+        var active = k.key === selectedSlot ? ' active' : '';
+        return '<div class="color-slot' + active + '" data-key="' + k.key + '">' +
+          '<div class="color-swatch" style="background:' + currentPalette[k.key] + '"></div>' +
+          '<span class="text-sm" style="color:var(--c-textDim)">' + k.label + '</span>' +
+          '<span class="ml-auto text-xs" style="color:var(--c-textMuted)">' + currentPalette[k.key] + '</span>' +
+          '</div>';
+      }).join('');
+      container.querySelectorAll('.color-slot').forEach(function(el) {
+        el.addEventListener('click', function() {
+          selectedSlot = this.dataset.key;
+          currentHsl = hexToHsl(currentPalette[selectedSlot]);
+          updatePreview();
+          drawWheel();
+          drawBrightnessBar();
+          renderSlots();
+        });
+      });
+    }
+
+    /* ========== Presets ========== */
+    function buildPresets() {
+      var container = document.getElementById('presetList');
+      container.innerHTML = presets.map(function(p, i) {
+        return '<button class="preset-chip" data-idx="' + i + '">' + p.name + '</button>';
+      }).join('');
+      container.querySelectorAll('.preset-chip').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          currentPalette = JSON.parse(JSON.stringify(presets[this.dataset.idx]));
+          applyPalette(currentPalette);
+          currentHsl = hexToHsl(currentPalette[selectedSlot]);
+          updatePreview();
+          drawWheel();
+          drawBrightnessBar();
+          renderSlots();
+        });
+      });
+    }
+
+    /* ========== Panel Open/Close ========== */
+    var palettePanel = document.getElementById('palettePanel');
+    var paletteOverlay = document.getElementById('paletteOverlay');
+
+    function openPalette() {
+      renderSlots();
+      buildPresets();
+      currentHsl = hexToHsl(currentPalette[selectedSlot]);
+      updatePreview();
+      drawWheel();
+      drawBrightnessBar();
+      palettePanel.classList.add('open');
+      paletteOverlay.classList.add('open');
+    }
+    function closePalette() {
+      palettePanel.classList.remove('open');
+      paletteOverlay.classList.remove('open');
+    }
+
+    document.getElementById('paletteToggle').addEventListener('click', openPalette);
+    document.getElementById('paletteClose').addEventListener('click', closePalette);
+    paletteOverlay.addEventListener('click', closePalette);
+
+    document.getElementById('paletteSave').addEventListener('click', function() {
+      savePalette(currentPalette);
+      closePalette();
+    });
+    document.getElementById('paletteReset').addEventListener('click', function() {
+      currentPalette = JSON.parse(JSON.stringify(defaultPalette));
+      applyPalette(currentPalette);
+      currentHsl = hexToHsl(currentPalette[selectedSlot]);
+      updatePreview();
+      drawWheel();
+      drawBrightnessBar();
+      renderSlots();
+    });
+
+    /* ========== Search Engine ========== */
+    var landing = document.getElementById("landing");
+    var topBar = document.getElementById("topBar");
+    var modeBar = document.getElementById("modeBar");
+    var searchSlot = document.getElementById("searchSlot");
+    var searchWrap = document.getElementById("searchWrap");
+    var searchInput = document.getElementById("searchInput");
+    var searchBtn = document.getElementById("searchBtn");
+    var landingLogo = document.getElementById("landingLogo");
+    var backLogo = document.getElementById("backLogo");
+    var resultsPage = document.getElementById("resultsPage");
+    var resultsDiv = document.getElementById("results");
+    var imageGrid = document.getElementById("imageGrid");
+    var resultCount = document.getElementById("resultCount");
+    var spinner = document.getElementById("spinner");
+    var noResults = document.getElementById("noResults");
+    var pagination = document.getElementById("pagination");
+    var wikiCard = document.getElementById("wikiCard");
+    var lightbox = document.getElementById("lightbox");
+    var lbImg = document.getElementById("lbImg");
+    var lbInfo = document.getElementById("lbInfo");
+
+    var currentPage = 1, currentQuery = "", inResults = false, currentMode = "web";
+    var currentImageCtrl = null;
+
+    /* ---- Client-side cache ---- */
+    var clientCache = new Map();
+    var CACHE_MAX = 50;
+    function clientCacheKey(q, p, m) { return (m || "web") + "|" + q.toLowerCase().trim() + "|p" + p; }
+    function clientCacheGet(q, p, m) {
+      var entry = clientCache.get(clientCacheKey(q, p, m));
+      if (entry && Date.now() - entry.ts < 5 * 60 * 1000) return entry.data;
+      if (entry) clientCache.delete(clientCacheKey(q, p, m));
+      return null;
+    }
+    function clientCacheSet(q, p, m, data) {
+      if (clientCache.size >= CACHE_MAX) clientCache.delete(clientCache.keys().next().value);
+      clientCache.set(clientCacheKey(q, p, m), { data: data, ts: Date.now() });
+    }
+
+    /* ---- Abort controllers ---- */
+    var currentSearchCtrl = null;
+    var currentWikiCtrl = null;
+
+    var suggestions = [
+      "quantum computing explained", "best coffee recipes", "how black holes form",
+      "history of the internet", "rarest animals in the world", "deep sea creatures",
+      "how GPS works", "ancient civilizations timeline", "why is the sky blue",
+      "largest prime number", "how vaccines work", "future of space travel",
+      "most beautiful places on earth", "how nuclear energy works", "mystery of dark matter",
+      "best programming languages 2026", "how the human brain works", "ocean current patterns",
+      "faster than light travel", "deepest caves in the world", "how earthquakes happen",
+      "most powerful computers", "how thunderstorms form", "origin of the moon",
+      "rare psychological phenomena", "how fiber optic cables work", "coldest places on earth",
+      "history of cryptography", "how volcanoes erupt", "longest rivers in the world"
+    ];
+
+    function renderSuggestions() {
+      var pool = suggestions.slice(), picks = [];
+      for (var i = 0; i < 5 && pool.length > 0; i++) {
+        var idx = Math.floor(Math.random() * pool.length);
+        picks.push(pool.splice(idx, 1)[0]);
+      }
+      document.getElementById("quickLinks").innerHTML = picks.map(function(s) {
+        return '<button class="w-full surface-bg border rounded-full px-4 py-1.5 text-sm text-dim transition-all duration-200 cursor-pointer truncate hover:text-white" onclick="quickSearch(\'' + s.replace(/'/g, "\\'") + '\')">' + s + '</button>';
+      }).join("");
+    }
+    renderSuggestions();
+
+    function quickSearch(query) { searchInput.value = query; doSearch(query, 1); }
+
+    function moveToResults() {
+      if (!inResults) {
+        searchSlot.appendChild(searchWrap);
+        topBar.style.display = "flex";
+        modeBar.style.display = "block";
+        landing.classList.add("hidden");
+        resultsPage.style.display = "block";
+        inResults = true;
+      }
+    }
+
+    function showLanding() {
+      landing.appendChild(searchWrap);
+      topBar.style.display = "none";
+      modeBar.style.display = "none";
+      resultsPage.style.display = "none";
+      landing.classList.remove("hidden");
+      searchInput.value = ""; resultsDiv.innerHTML = ""; pagination.innerHTML = "";
+      imageGrid.innerHTML = ""; imageGrid.style.display = "none";
+      wikiCard.style.display = "none";
+      inResults = false; currentMode = "web";
+      document.getElementById("tabWeb").classList.add("active");
+      document.getElementById("tabImages").classList.remove("active");
+      renderSuggestions();
+      if (currentSearchCtrl) currentSearchCtrl.abort();
+      if (currentWikiCtrl) currentWikiCtrl.abort();
+      if (currentImageCtrl) currentImageCtrl.abort();
+    }
+
+    /* ---- Mode tabs ---- */
+    function setMode(mode) {
+      if (mode === currentMode) return;
+      currentMode = mode;
+      document.getElementById("tabWeb").classList.toggle("active", mode === "web");
+      document.getElementById("tabImages").classList.toggle("active", mode === "images");
+      if (currentQuery) {
+        if (mode === "web") doSearch(currentQuery, 1);
+        else doImageSearch(currentQuery);
+      }
+    }
+    document.getElementById("tabWeb").addEventListener("click", function() { setMode("web"); });
+    document.getElementById("tabImages").addEventListener("click", function() { setMode("images"); });
+
+    function renderResultCards(list) {
+      var html = "";
+      list.forEach(function(r) {
+        html += '<div class="mb-6 p-5 result-card rounded-xl">';
+        html += '<div class="text-cyan-custom text-xs mb-1 break-all">' + escapeHtml(r.link) + '</div>';
+        html += '<div class="text-[1.15rem] font-semibold mb-1.5"><a href="' + escapeHtml(r.link) + '" target="_blank" rel="noopener" class="no-underline text-accent hover:underline">' + escapeHtml(r.title) + '</a></div>';
+        html += '<div class="text-gray-400 text-[0.92rem] leading-relaxed">' + escapeHtml(r.snippet) + '</div></div>';
+      });
+      resultsDiv.innerHTML = html;
+    }
+
+    function renderImageCards(images) {
+      imageGrid.innerHTML = images.map(function(img) {
+        return '<div class="image-card" onclick="openLightbox(\'' + escapeAttr(img.full) + '\',\'' + escapeAttr(img.title) + '\',\'' + escapeAttr(img.source) + '\')">' +
+          '<img src="' + escapeHtml(img.thumb) + '" alt="' + escapeHtml(img.title) + '" loading="lazy" />' +
+          '<div class="img-overlay">' + escapeHtml(img.title || img.source || "") + '</div></div>';
+      }).join("");
+    }
+
+    function renderPagination(totalPages, query) {
+      if (totalPages <= 1) { pagination.innerHTML = ""; return; }
+      var phtml = "";
+      if (currentPage > 1) phtml += '<button class="surface-bg border rounded-lg px-4 py-2 text-sm text-gray-300 transition-all cursor-pointer hover:text-white" style="border-color:var(--c-border)" onclick="doSearch(\'' + escapeAttr(query) + '\',' + (currentPage-1) + ')">Prev</button>';
+      for (var i = 1; i <= totalPages; i++) {
+        var bg = i===currentPage ? 'background:var(--c-accent1);border-color:var(--c-accent1);color:#fff' : 'background:var(--c-surface);border-color:var(--c-border);color:#d1d5db';
+        phtml += '<button class="border rounded-lg px-4 py-2 text-sm transition-all cursor-pointer hover:text-white" style="' + bg + '" onclick="doSearch(\'' + escapeAttr(query) + '\',' + i + ')">' + i + '</button>';
+      }
+      if (currentPage < totalPages) phtml += '<button class="surface-bg border rounded-lg px-4 py-2 text-sm text-gray-300 transition-all cursor-pointer hover:text-white" style="border-color:var(--c-border)" onclick="doSearch(\'' + escapeAttr(query) + '\',' + (currentPage+1) + ')">Next</button>';
+      pagination.innerHTML = phtml;
+    }
+
+    function showWiki(wikiRes) {
+      if (!wikiRes || !wikiRes.title) { wikiCard.style.display = "none"; return; }
+      wikiCard.style.display = "block";
+      document.getElementById("wikiTitle").textContent = wikiRes.title;
+      document.getElementById("wikiExtract").textContent = wikiRes.extract || "";
+      document.getElementById("wikiLink").href = wikiRes.content_urls || "#";
+      var thumb = document.getElementById("wikiThumb");
+      if (wikiRes.thumbnail) { thumb.src = wikiRes.thumbnail; thumb.style.display = "block"; }
+      else { thumb.style.display = "none"; }
+    }
+
+    /* ---- Lightbox ---- */
+    function openLightbox(src, title, source) {
+      lbImg.src = src;
+      lbInfo.textContent = title || source || "";
+      lightbox.classList.add("open");
+    }
+    lightbox.addEventListener("click", function(e) {
+      if (e.target === lightbox || e.target.classList.contains("lb-close")) lightbox.classList.remove("open");
+    });
+    document.addEventListener("keydown", function(e) { if (e.key === "Escape") lightbox.classList.remove("open"); });
+
+    /* ---- Web search ---- */
+    async function doSearch(query, page) {
+      page = page || 1;
+      if (!query || !query.trim()) return;
+
+      if (currentSearchCtrl) currentSearchCtrl.abort();
+      if (currentWikiCtrl) currentWikiCtrl.abort();
+      if (currentImageCtrl) currentImageCtrl.abort();
+
+      currentQuery = query.trim(); currentPage = page; moveToResults();
+      setMode("web");
+
+      var cached = clientCacheGet(currentQuery, page, "web");
+      var wikiCached = clientCacheGet(currentQuery, 1, "wiki");
+
+      resultsDiv.style.display = "block";
+      imageGrid.style.display = "none"; imageGrid.innerHTML = "";
+
+      if (cached) {
+        noResults.style.display = "none";
+        if (wikiCached) showWiki(wikiCached);
+        resultCount.textContent = "About " + cached.total + " results (" + cached.page + " of " + cached.totalPages + ")";
+        renderResultCards(cached.results);
+        renderPagination(cached.totalPages, currentQuery);
+        if (!wikiCached) fetchWiki(currentQuery);
+      } else {
+        spinner.style.display = "block";
+        resultsDiv.innerHTML = "";
+        noResults.style.display = "none";
+        pagination.innerHTML = "";
+        wikiCard.style.display = "none";
+      }
+
+      if (!cached) {
+        currentSearchCtrl = new AbortController();
+        currentWikiCtrl = new AbortController();
+        var encoded = encodeURIComponent(currentQuery);
+        try {
+          var searchP = fetch("/api/search?q=" + encoded + "&page=" + page, { signal: currentSearchCtrl.signal }).then(function(r) { return r.json(); });
+          var wikiP = fetch("/api/wiki?q=" + encoded, { signal: currentWikiCtrl.signal }).then(function(r) { return r.json(); });
+
+          var searchRes = await searchP;
+          spinner.style.display = "none";
+
+          clientCacheSet(currentQuery, page, "web", searchRes);
+          if (searchRes.results && searchRes.results.length > 0) {
+            resultCount.textContent = "About " + searchRes.total + " results (" + searchRes.page + " of " + searchRes.totalPages + ")";
+            renderResultCards(searchRes.results);
+            renderPagination(searchRes.totalPages, currentQuery);
+          } else {
+            noResults.style.display = "block";
+          }
+
+          wikiP.then(function(wikiRes) {
+            clientCacheSet(currentQuery, 1, "wiki", wikiRes);
+            showWiki(wikiRes);
+          }).catch(function() {});
+        } catch (err) {
+          if (err.name !== "AbortError") {
+            spinner.style.display = "none";
+            noResults.style.display = "block";
+            console.error(err);
+          }
+        }
+      }
+    }
+
+    /* ---- Image search ---- */
+    async function doImageSearch(query) {
+      if (!query || !query.trim()) return;
+
+      if (currentImageCtrl) currentImageCtrl.abort();
+      if (currentSearchCtrl) currentSearchCtrl.abort();
+      if (currentWikiCtrl) currentWikiCtrl.abort();
+
+      currentQuery = query.trim(); moveToResults();
+
+      resultsDiv.style.display = "none"; resultsDiv.innerHTML = "";
+      pagination.innerHTML = "";
+      wikiCard.style.display = "none";
+      imageGrid.style.display = "grid";
+
+      var cached = clientCacheGet(currentQuery, 1, "images");
+      if (cached) {
+        noResults.style.display = "none";
+        resultCount.textContent = cached.total + " images";
+        renderImageCards(cached.results);
+      } else {
+        spinner.style.display = "block";
+        imageGrid.innerHTML = "";
+        noResults.style.display = "none";
+      }
+
+      if (!cached) {
+        currentImageCtrl = new AbortController();
+        var encoded = encodeURIComponent(currentQuery);
+        try {
+          var res = await fetch("/api/images?q=" + encoded, { signal: currentImageCtrl.signal }).then(function(r) { return r.json(); });
+          spinner.style.display = "none";
+
+          clientCacheSet(currentQuery, 1, "images", res);
+          if (res.results && res.results.length > 0) {
+            resultCount.textContent = res.total + " images";
+            renderImageCards(res.results);
+          } else {
+            noResults.style.display = "block";
+          }
+        } catch (err) {
+          if (err.name !== "AbortError") {
+            spinner.style.display = "none";
+            noResults.style.display = "block";
+          }
+        }
+      }
+    }
+
+    function fetchWiki(query) {
+      currentWikiCtrl = new AbortController();
+      var encoded = encodeURIComponent(query);
+      fetch("/api/wiki?q=" + encoded, { signal: currentWikiCtrl.signal })
+        .then(function(r) { return r.json(); })
+        .then(function(wikiRes) { clientCacheSet(query, 1, "wiki", wikiRes); showWiki(wikiRes); })
+        .catch(function() {});
+    }
+
+    function escapeHtml(s) { var d=document.createElement("div"); d.appendChild(document.createTextNode(s)); return d.innerHTML; }
+    function escapeAttr(s) { return s.replace(/\\/g,"\\\\").replace(/'/g,"\\'"); }
+
+    searchBtn.addEventListener("click", function() { doSearch(searchInput.value, 1); });
+    backLogo.addEventListener("click", showLanding);
+    landingLogo.addEventListener("click", showLanding);
+  </script>
+</body>
+</html>
