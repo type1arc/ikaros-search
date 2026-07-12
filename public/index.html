@@ -59,9 +59,13 @@
     .logo-text {
       filter: drop-shadow(0 0 8px color-mix(in srgb, var(--c-accent1) 50%, transparent));
     }
-    .search-glow:focus-within { border-color: var(--c-accent1); box-shadow: 0 0 24px color-mix(in srgb, var(--c-accent1) 35%, transparent); }
-    .search-box-bg { background: var(--c-surface); border: 3px solid var(--c-border); border-radius: 0; }
-    .search-box-bg:hover { border-color: var(--c-accent1); }
+    .search-glow:focus-within { border-color: var(--c-accent1); box-shadow: 5px 5px 0 var(--c-accent1), 10px 10px 0 var(--c-accent3), 0 0 30px color-mix(in srgb, var(--c-accent1) 40%, transparent); }
+    .search-box-bg { background: var(--c-surface); border: 3px solid var(--c-border); border-radius: 0;
+      clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px);
+      box-shadow: 5px 5px 0 var(--c-accent1), 10px 10px 0 var(--c-accent3);
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+    .search-box-bg:hover { border-color: var(--c-accent1); box-shadow: 5px 5px 0 var(--c-accent1), 10px 10px 0 var(--c-accent3), 0 0 20px color-mix(in srgb, var(--c-accent1) 25%, transparent); }
     .search-btn-bg { background: linear-gradient(135deg, var(--c-accent1), var(--c-accent3)); border-radius: 0; }
     .search-btn-bg:hover { box-shadow: 0 0 18px color-mix(in srgb, var(--c-accent1) 50%, transparent); }
     .panel-bg { background: var(--c-panel); border-color: var(--c-borderHover); }
