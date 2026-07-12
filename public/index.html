@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ikaros</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root {
@@ -21,32 +24,60 @@
     }
     body {
       background: var(--c-bg); color: var(--c-textMain);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'VT323', monospace;
       min-height: 100vh; margin: 0; transition: background 0.3s, color 0.3s;
+      font-size: 1.15rem;
     }
+    .pixel-font { font-family: 'Press Start 2P', monospace; }
+    .retro-text { font-family: 'VT323', monospace; }
+
+    /* CRT scanline overlay */
+    body::after {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px
+      );
+    }
+
+    /* Pixelated borders for cards */
+    .pixel-border {
+      border: 3px solid var(--c-border);
+      box-shadow: 3px 3px 0 var(--c-border), inset 0 0 0 1px var(--c-surface);
+    }
+    .pixel-border-accent {
+      border: 3px solid var(--c-accent1);
+      box-shadow: 3px 3px 0 var(--c-accent3);
+    }
+
     .logo-text {
       background: linear-gradient(135deg, var(--c-accent1), var(--c-accent2), var(--c-accent3));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      font-family: 'Press Start 2P', monospace;
+      text-shadow: none;
+      image-rendering: pixelated;
+    }
+    .logo-text {
+      filter: drop-shadow(0 0 8px color-mix(in srgb, var(--c-accent1) 50%, transparent));
     }
     .search-glow:focus-within { border-color: var(--c-accent1); box-shadow: 0 0 24px color-mix(in srgb, var(--c-accent1) 35%, transparent); }
-    .search-box-bg { background: var(--c-surface); border-color: var(--c-border); }
+    .search-box-bg { background: var(--c-surface); border: 3px solid var(--c-border); border-radius: 0; }
     .search-box-bg:hover { border-color: var(--c-accent1); }
-    .search-btn-bg { background: linear-gradient(135deg, var(--c-accent1), var(--c-accent3)); }
+    .search-btn-bg { background: linear-gradient(135deg, var(--c-accent1), var(--c-accent3)); border-radius: 0; }
     .search-btn-bg:hover { box-shadow: 0 0 18px color-mix(in srgb, var(--c-accent1) 50%, transparent); }
     .panel-bg { background: var(--c-panel); border-color: var(--c-borderHover); }
     .surface-bg { background: var(--c-surface); border-color: var(--c-border); }
     .surface-bg:hover { border-color: var(--c-accent1); background: color-mix(in srgb, var(--c-surface) 92%, var(--c-accent1)); }
-    .result-card { background: var(--c-panel); border-color: var(--c-borderHover); transition: border-color 0.2s, transform 0.15s; }
-    .result-card:hover { border-color: var(--c-accent1); transform: translateX(4px); }
+    .result-card { background: var(--c-panel); border: 2px solid var(--c-borderHover); transition: border-color 0.2s, transform 0.15s; }
+    .result-card:hover { border-color: var(--c-accent1); transform: translateX(4px); box-shadow: 4px 4px 0 color-mix(in srgb, var(--c-accent1) 30%, transparent); }
     .text-accent { color: var(--c-accent1); }
     .text-cyan-custom { color: var(--c-accent2); }
     .text-pink-custom { color: var(--c-accent3); }
     .text-dim { color: var(--c-textDim); }
     .text-muted { color: var(--c-textMuted); }
     .spinner::after {
-      content: ''; display: inline-block; width: 36px; height: 36px;
+      content: ''; display: inline-block; width: 32px; height: 32px;
       border: 3px solid var(--c-border); border-top-color: var(--c-accent1);
-      border-radius: 50%; animation: spin 0.7s linear infinite;
+      animation: spin 0.8s steps(8) infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -78,9 +109,10 @@
       border: 2px solid rgba(255,255,255,0.1);
     }
     .preset-chip {
-      display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 0.78rem;
-      border: 1px solid var(--c-border); background: var(--c-surface); color: var(--c-textDim);
+      display: inline-block; padding: 6px 14px; border-radius: 0; font-size: 0.6rem;
+      border: 2px solid var(--c-border); background: var(--c-surface); color: var(--c-textDim);
       cursor: pointer; transition: all 0.2s; white-space: nowrap;
+      font-family: 'Press Start 2P', monospace;
     }
     .preset-chip:hover { border-color: var(--c-accent1); color: #fff; }
 
@@ -89,9 +121,10 @@
 
     /* Search mode toggle */
     .mode-tab {
-      padding: 6px 18px; border-radius: 20px; font-size: 0.85rem; font-weight: 500;
-      border: 1px solid var(--c-border); background: transparent; color: var(--c-textDim);
-      cursor: pointer; transition: all 0.2s;
+      padding: 6px 18px; border-radius: 0; font-size: 0.85rem; font-weight: 500;
+      border: 2px solid var(--c-border); background: transparent; color: var(--c-textDim);
+      cursor: pointer; transition: all 0.2s; font-family: 'Press Start 2P', monospace;
+      font-size: 0.55rem; letter-spacing: 0.5px;
     }
     .mode-tab:hover { border-color: var(--c-accent1); color: #fff; }
     .mode-tab.active { background: var(--c-accent1); border-color: var(--c-accent1); color: #fff; }
@@ -102,12 +135,12 @@
       gap: 10px;
     }
     .image-card {
-      position: relative; border-radius: 10px; overflow: hidden;
-      border: 2px solid var(--c-border); background: var(--c-surface);
+      position: relative; border-radius: 0; overflow: hidden;
+      border: 3px solid var(--c-border); background: var(--c-surface);
       cursor: pointer; transition: border-color 0.2s, transform 0.15s;
       aspect-ratio: 4/3;
     }
-    .image-card:hover { border-color: var(--c-accent1); transform: scale(1.03); }
+    .image-card:hover { border-color: var(--c-accent1); transform: scale(1.03); box-shadow: 4px 4px 0 color-mix(in srgb, var(--c-accent1) 30%, transparent); }
     .image-card img {
       width: 100%; height: 100%; object-fit: cover; display: block;
     }
@@ -126,7 +159,8 @@
     }
     .lightbox.open { display: flex; }
     .lightbox img {
-      max-width: 92vw; max-height: 88vh; border-radius: 8px; box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+      max-width: 92vw; max-height: 88vh; border-radius: 0; border: 3px solid var(--c-accent1);
+      box-shadow: 6px 6px 0 var(--c-accent3);
     }
     .lightbox .lb-close {
       position: absolute; top: 20px; right: 28px; font-size: 2rem;
@@ -135,9 +169,10 @@
     .lightbox .lb-close:hover { opacity: 1; }
     .lightbox .lb-info {
       position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
-      background: var(--c-panel); border: 1px solid var(--c-border);
-      border-radius: 10px; padding: 10px 18px; max-width: 600px; width: 90%;
+      background: var(--c-panel); border: 3px solid var(--c-border);
+      border-radius: 0; padding: 10px 18px; max-width: 600px; width: 90%;
       text-align: center; font-size: 0.85rem; color: var(--c-textDim);
+      box-shadow: 4px 4px 0 rgba(0,0,0,0.4);
     }
   </style>
 </head>
@@ -154,19 +189,19 @@
   <div class="palette-panel" id="palettePanel">
     <div class="p-5">
       <div class="flex items-center justify-between mb-5">
-        <h2 class="text-lg font-bold text-white">Color Palette</h2>
+        <h2 class="text-lg font-bold text-white pixel-font" style="font-size:0.7rem">Color Palette</h2>
         <button id="paletteClose" class="text-gray-400 hover:text-white text-xl cursor-pointer">&times;</button>
       </div>
 
       <!-- Presets -->
       <div class="mb-5">
-        <h3 class="text-xs uppercase tracking-wider text-gray-500 mb-2">Presets</h3>
+        <h3 class="text-xs uppercase tracking-wider text-gray-500 mb-2 pixel-font" style="font-size:0.5rem">Presets</h3>
         <div class="flex flex-wrap gap-1.5" id="presetList"></div>
       </div>
 
       <!-- Color wheel area -->
       <div class="mb-5">
-        <h3 class="text-xs uppercase tracking-wider text-gray-500 mb-3">Wheel</h3>
+        <h3 class="text-xs uppercase tracking-wider text-gray-500 mb-3 pixel-font" style="font-size:0.5rem">Wheel</h3>
         <div class="flex gap-3 items-start">
           <canvas id="colorWheel" width="220" height="220" class="rounded-full shrink-0"></canvas>
           <div class="flex flex-col gap-2 flex-1 min-w-0">
@@ -184,14 +219,14 @@
 
       <!-- Color slots -->
       <div class="mb-6">
-        <h3 class="text-xs uppercase tracking-wider text-gray-500 mb-2">Slots</h3>
+        <h3 class="text-xs uppercase tracking-wider text-gray-500 mb-2 pixel-font" style="font-size:0.5rem">Slots</h3>
         <div class="space-y-1" id="colorSlots"></div>
       </div>
 
       <!-- Buttons -->
       <div class="flex gap-2">
-        <button id="paletteReset" class="flex-1 py-2.5 rounded-xl text-sm border text-gray-400 hover:text-white transition-all cursor-pointer" style="border-color:var(--c-border)">Reset</button>
-        <button id="paletteSave" class="flex-1 py-2.5 rounded-xl text-sm text-white font-medium transition-all cursor-pointer search-btn-bg">Save</button>
+        <button id="paletteReset" class="flex-1 py-2.5 rounded-none text-sm border text-gray-400 hover:text-white transition-all cursor-pointer pixel-font" style="border-color:var(--c-border); font-size:0.5rem">RESET</button>
+        <button id="paletteSave" class="flex-1 py-2.5 rounded-none text-sm text-white font-medium transition-all cursor-pointer search-btn-bg pixel-font" style="font-size:0.5rem">SAVE</button>
       </div>
     </div>
   </div>
@@ -199,10 +234,10 @@
   <!-- Landing -->
   <div class="flex flex-col items-center justify-center h-screen" id="landing">
     <h1 class="logo-text text-6xl font-extrabold tracking-tight mb-3 cursor-pointer" id="landingLogo">Ikaros</h1>
-    <p class="text-lg mb-10 text-dim">Search the entire web, privately.</p>
+    <p class="text-lg mb-10 text-dim pixel-font" style="font-size:0.6rem; letter-spacing:1px">Search the entire web, privately.</p>
     <div class="relative w-[90%] max-w-[700px]" id="searchWrap">
       <form onsubmit="event.preventDefault(); doSearch(searchInput.value, 1);" class="flex items-center search-box-bg border-2 rounded-full pl-7 pr-2.5 py-2.5 search-glow transition-all duration-300">
-        <input type="text" id="searchInput" class="flex-1 bg-transparent border-none outline-none text-white text-xl py-2 px-3" style="color:var(--c-textMain)" placeholder="Search anything..." autocomplete="off" />
+        <input type="text" id="searchInput" class="flex-1 bg-transparent border-none outline-none text-white text-xl py-2 px-3 retro-text" style="color:var(--c-textMain); font-size:1.3rem" placeholder="Search anything..." autocomplete="off" />
         <button type="button" id="searchBtn" class="w-[50px] h-[50px] rounded-full search-btn-bg flex items-center justify-center hover:scale-110 transition-all duration-200 shrink-0 cursor-pointer" aria-label="Search">
           <svg class="w-6 h-6 fill-white" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
         </button>
@@ -236,17 +271,17 @@
   <div class="max-w-[800px] mx-auto px-6 pt-5 pb-16" style="display:none" id="resultsPage">
     <div class="panel-bg border rounded-2xl p-5 mb-6" style="display:none" id="wikiCard">
       <img class="float-right ml-3.5 mb-2 rounded-lg max-h-[100px]" style="display:none" id="wikiThumb" src="" alt="" />
-      <h3 class="text-pink-custom mb-2.5 text-sm font-semibold" id="wikiTitle"></h3>
+      <h3 class="text-pink-custom mb-2.5 text-sm font-semibold pixel-font" style="font-size:0.6rem" id="wikiTitle"></h3>
       <p class="text-gray-400 text-[0.9rem] leading-relaxed mb-2" id="wikiExtract"></p>
       <a class="text-accent text-xs hover:underline" id="wikiLink" href="#" target="_blank" rel="noopener">Read more on Wikipedia &rarr;</a>
     </div>
-    <p class="text-muted text-sm mb-4" id="resultCount"></p>
+    <p class="text-muted text-sm mb-4 pixel-font" style="font-size:0.5rem" id="resultCount"></p>
     <div class="text-center py-10 spinner" style="display:none" id="spinner"></div>
     <div id="results"></div>
     <div id="imageGrid" class="image-grid" style="display:none"></div>
     <div class="text-center py-16 text-muted text-lg" style="display:none" id="noResults">
-      <div class="text-5xl mb-3">&#x1F50D;</div>
-      No results found. Try a different query.
+      <div class="text-5xl mb-3 pixel-font" style="font-size:1.5rem">NO RESULTS</div>
+      <div class="retro-text" style="font-size:1.2rem">Try a different query.</div>
     </div>
     <div class="flex justify-center gap-2 mt-8" id="pagination"></div>
   </div>
@@ -580,7 +615,7 @@
         picks.push(pool.splice(idx, 1)[0]);
       }
       document.getElementById("quickLinks").innerHTML = picks.map(function(s) {
-        return '<button class="w-full surface-bg border rounded-full px-4 py-1.5 text-sm text-dim transition-all duration-200 cursor-pointer truncate hover:text-white" onclick="quickSearch(\'' + s.replace(/'/g, "\\'") + '\')">' + s + '</button>';
+        return '<button class="w-full surface-bg border rounded-none px-4 py-1.5 text-sm text-dim transition-all duration-200 cursor-pointer truncate hover:text-white pixel-font" style="font-size:0.5rem; border-width:2px" onclick="quickSearch(\'' + s.replace(/'/g, "\\'") + '\')">' + s + '</button>';
       }).join("");
     }
     renderSuggestions();
@@ -599,7 +634,7 @@
     }
 
     function showLanding() {
-      landing.appendChild(searchWrap);
+      landing.insertBefore(searchWrap, document.getElementById("quickLinks"));
       topBar.style.display = "none";
       modeBar.style.display = "none";
       resultsPage.style.display = "none";
@@ -633,10 +668,10 @@
     function renderResultCards(list) {
       var html = "";
       list.forEach(function(r) {
-        html += '<div class="mb-6 p-5 result-card rounded-xl">';
-        html += '<div class="text-cyan-custom text-xs mb-1 break-all">' + escapeHtml(r.link) + '</div>';
-        html += '<div class="text-[1.15rem] font-semibold mb-1.5"><a href="' + escapeHtml(r.link) + '" target="_blank" rel="noopener" class="no-underline text-accent hover:underline">' + escapeHtml(r.title) + '</a></div>';
-        html += '<div class="text-gray-400 text-[0.92rem] leading-relaxed">' + escapeHtml(r.snippet) + '</div></div>';
+        html += '<div class="mb-6 p-5 result-card">';
+        html += '<div class="text-cyan-custom text-xs mb-1 break-all retro-text">' + escapeHtml(r.link) + '</div>';
+        html += '<div class="text-[1.15rem] font-semibold mb-1.5"><a href="' + escapeHtml(r.link) + '" target="_blank" rel="noopener" class="no-underline text-accent hover:underline retro-text">' + escapeHtml(r.title) + '</a></div>';
+        html += '<div class="text-gray-400 text-[0.92rem] leading-relaxed retro-text">' + escapeHtml(r.snippet) + '</div></div>';
       });
       resultsDiv.innerHTML = html;
     }
@@ -645,19 +680,19 @@
       imageGrid.innerHTML = images.map(function(img) {
         return '<div class="image-card" onclick="openLightbox(\'' + escapeAttr(img.full) + '\',\'' + escapeAttr(img.title) + '\',\'' + escapeAttr(img.source) + '\')">' +
           '<img src="' + escapeHtml(img.thumb) + '" alt="' + escapeHtml(img.title) + '" loading="lazy" />' +
-          '<div class="img-overlay">' + escapeHtml(img.title || img.source || "") + '</div></div>';
+          '<div class="img-overlay pixel-font" style="font-size:0.45rem">' + escapeHtml(img.title || img.source || "") + '</div></div>';
       }).join("");
     }
 
     function renderPagination(totalPages, query) {
       if (totalPages <= 1) { pagination.innerHTML = ""; return; }
       var phtml = "";
-      if (currentPage > 1) phtml += '<button class="surface-bg border rounded-lg px-4 py-2 text-sm text-gray-300 transition-all cursor-pointer hover:text-white" style="border-color:var(--c-border)" onclick="doSearch(\'' + escapeAttr(query) + '\',' + (currentPage-1) + ')">Prev</button>';
+      if (currentPage > 1) phtml += '<button class="surface-bg border-2 rounded-none px-4 py-2 text-sm text-gray-300 transition-all cursor-pointer hover:text-white pixel-font" style="border-color:var(--c-border); font-size:0.5rem" onclick="doSearch(\'' + escapeAttr(query) + '\',' + (currentPage-1) + ')">PREV</button>';
       for (var i = 1; i <= totalPages; i++) {
         var bg = i===currentPage ? 'background:var(--c-accent1);border-color:var(--c-accent1);color:#fff' : 'background:var(--c-surface);border-color:var(--c-border);color:#d1d5db';
-        phtml += '<button class="border rounded-lg px-4 py-2 text-sm transition-all cursor-pointer hover:text-white" style="' + bg + '" onclick="doSearch(\'' + escapeAttr(query) + '\',' + i + ')">' + i + '</button>';
+        phtml += '<button class="border-2 rounded-none px-4 py-2 text-sm transition-all cursor-pointer hover:text-white pixel-font" style="' + bg + '; font-size:0.5rem" onclick="doSearch(\'' + escapeAttr(query) + '\',' + i + ')">' + i + '</button>';
       }
-      if (currentPage < totalPages) phtml += '<button class="surface-bg border rounded-lg px-4 py-2 text-sm text-gray-300 transition-all cursor-pointer hover:text-white" style="border-color:var(--c-border)" onclick="doSearch(\'' + escapeAttr(query) + '\',' + (currentPage+1) + ')">Next</button>';
+      if (currentPage < totalPages) phtml += '<button class="surface-bg border-2 rounded-none px-4 py-2 text-sm text-gray-300 transition-all cursor-pointer hover:text-white pixel-font" style="border-color:var(--c-border); font-size:0.5rem" onclick="doSearch(\'' + escapeAttr(query) + '\',' + (currentPage+1) + ')">NEXT</button>';
       pagination.innerHTML = phtml;
     }
 
