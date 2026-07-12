@@ -59,13 +59,15 @@
     .logo-text {
       filter: drop-shadow(0 0 8px color-mix(in srgb, var(--c-accent1) 50%, transparent));
     }
-    .search-glow:focus-within { border-color: var(--c-accent1); box-shadow: 5px 5px 0 var(--c-accent1), 10px 10px 0 var(--c-accent3), 0 0 30px color-mix(in srgb, var(--c-accent1) 40%, transparent); }
+    .search-glow:focus-within { border-color: var(--c-accent1); }
+    .search-outer { box-shadow: 5px 5px 0 var(--c-accent1), 10px 10px 0 var(--c-accent3); transition: box-shadow 0.2s; }
+    .search-outer:hover { box-shadow: 5px 5px 0 var(--c-accent1), 10px 10px 0 var(--c-accent3), 0 0 24px color-mix(in srgb, var(--c-accent1) 30%, transparent); }
+    .search-outer:focus-within { box-shadow: 5px 5px 0 var(--c-accent1), 10px 10px 0 var(--c-accent3), 0 0 30px color-mix(in srgb, var(--c-accent1) 40%, transparent); }
     .search-box-bg { background: var(--c-surface); border: 3px solid var(--c-border); border-radius: 0;
       clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px);
-      box-shadow: 5px 5px 0 var(--c-accent1), 10px 10px 0 var(--c-accent3);
-      transition: box-shadow 0.2s, border-color 0.2s;
+      transition: border-color 0.2s;
     }
-    .search-box-bg:hover { border-color: var(--c-accent1); box-shadow: 5px 5px 0 var(--c-accent1), 10px 10px 0 var(--c-accent3), 0 0 20px color-mix(in srgb, var(--c-accent1) 25%, transparent); }
+    .search-box-bg:hover { border-color: var(--c-accent1); }
     .search-btn-bg { background: linear-gradient(135deg, var(--c-accent1), var(--c-accent3)); border-radius: 0; }
     .search-btn-bg:hover { box-shadow: 0 0 18px color-mix(in srgb, var(--c-accent1) 50%, transparent); }
     .panel-bg { background: var(--c-panel); border-color: var(--c-borderHover); }
@@ -240,12 +242,14 @@
     <h1 class="logo-text text-6xl font-extrabold tracking-tight mb-3 cursor-pointer" id="landingLogo">Ikaros</h1>
     <p class="text-lg mb-10 text-dim pixel-font" style="font-size:0.6rem; letter-spacing:1px">Search the entire web, privately.</p>
     <div class="relative w-[90%] max-w-[700px]" id="searchWrap">
-      <form onsubmit="event.preventDefault(); doSearch(searchInput.value, 1);" class="flex items-center search-box-bg border-2 rounded-full pl-7 pr-2.5 py-2.5 search-glow transition-all duration-300">
+      <div class="search-outer">
+        <form onsubmit="event.preventDefault(); doSearch(searchInput.value, 1);" class="flex items-center search-box-bg search-glow pl-7 pr-2.5 py-2.5 transition-all duration-300">
         <input type="text" id="searchInput" class="flex-1 bg-transparent border-none outline-none text-white text-xl py-2 px-3 retro-text" style="color:var(--c-textMain); font-size:1.3rem" placeholder="Search anything..." autocomplete="off" />
         <button type="button" id="searchBtn" class="w-[50px] h-[50px] rounded-full search-btn-bg flex items-center justify-center hover:scale-110 transition-all duration-200 shrink-0 cursor-pointer" aria-label="Search">
           <svg class="w-6 h-6 fill-white" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
         </button>
       </form>
+      </div>
     </div>
     <div class="w-[90%] max-w-[700px] grid grid-cols-5 gap-2 mt-7" id="quickLinks"></div>
   </div>
