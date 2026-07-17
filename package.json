@@ -4,7 +4,9 @@
   "description": "Ikaros - Search the entire web, privately.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "start:https": "SSL_KEY_FILE=certs/key.pem SSL_CERT_FILE=certs/cert.pem node server.js",
+    "generate-certs": "bash scripts/generate-certs.sh"
   },
   "engines": {
     "node": ">=18.0.0"

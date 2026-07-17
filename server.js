@@ -2,10 +2,41 @@ const express = require("express");
 const axios = require("axios");
 const cheerio = require("cheerio");
 const path = require("path");
+const fs = require("fs");
+const http = require("http");
+const https = require("https");
 const compression = require("compression");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+
+const SSL_KEY_FILE = process.env.SSL_KEY_FILE;
+const SSL_CERT_FILE = process.env.SSL_CERT_FILE;
+const SSL_CA_FILE = process.env.SSL_CA_FILE;
+
+function readSSLFile(filePath) {
+  const resolved = path.resolve(filePath);
+  if (!fs.existsSync(resolved)) {
+    console.error(`SSL file not found: ${resolved}`);
+    process.exit(1);
+  }
+  return fs.readFileSync(resolved);
+}
+
+function getSSLOptions() {
+  if (!SSL_KEY_FILE || !SSL_CERT_FILE) return null;
+
+  const opts = {
+    key: readSSLFile(SSL_KEY_FILE),
+    cert: readSSLFile(SSL_CERT_FILE),
+  };
+
+  if (SSL_CA_FILE) {
+    opts.ca = readSSLFile(SSL_CA_FILE);
+  }
+
+  return opts;
+}
 
 app.use(compression());
 app.use(express.static(path.join(__dirname, "public"), { maxAge: "1h", etag: true }));
@@ -236,6 +267,18 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.listen(PORT, () => {
-  console.log(`Search engine running at http://localhost:${PORT}`);
-});
+const sslOptions = getSSLOptions();
+
+const HOST = "0.0.0.0";
+
+if (sslOptions) {
+  const server = https.createServer(sslOptions, app);
+  server.listen(PORT, HOST, () => {
+    console.log(`Search engine running at https://${HOST}:${PORT}`);
+  });
+} else {
+  const server = http.createServer(app);
+  server.listen(PORT, HOST, () => {
+    console.log(`Search engine running at http://${HOST}:${PORT}`);
+  });
+}
