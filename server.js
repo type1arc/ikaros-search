@@ -271,14 +271,19 @@ const sslOptions = getSSLOptions();
 
 const HOST = "0.0.0.0";
 
-if (sslOptions) {
-  const server = https.createServer(sslOptions, app);
-  server.listen(PORT, HOST, () => {
-    console.log(`Search engine running at https://${HOST}:${PORT}`);
-  });
-} else {
-  const server = http.createServer(app);
-  server.listen(PORT, HOST, () => {
-    console.log(`Search engine running at http://${HOST}:${PORT}`);
-  });
+// Export for Vercel serverless
+module.exports = app;
+
+if (!process.env.VERCEL && require.main === module) {
+  if (sslOptions) {
+    const server = https.createServer(sslOptions, app);
+    server.listen(PORT, HOST, () => {
+      console.log(`Search engine running at https://${HOST}:${PORT}`);
+    });
+  } else {
+    const server = http.createServer(app);
+    server.listen(PORT, HOST, () => {
+      console.log(`Search engine running at http://${HOST}:${PORT}`);
+    });
+  }
 }
